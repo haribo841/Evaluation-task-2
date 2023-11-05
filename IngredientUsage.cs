@@ -8,10 +8,10 @@ namespace Evaluation_task_2
 {
     internal class IngredientUsage
     {
-        public DateTime DateTime { get; set; }
-        public double FlourInKg { get; set; }
-        public double GroatInKg { get; set; }
-        public double MilkInL { get; set; }
-        public int EggsCount { get; set; }
+        public DateTime TIMESTAMP { get; set; }
+        public double FLOUR { get; set; }
+        public double GROAT { get; set; }
+        public double MILK { get; set; }
+        public int EGG { get; set; }
     }
 }

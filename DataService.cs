@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using CsvHelper;
 using CsvHelper.Configuration;
-using Evaluation_task_2;
 
 namespace Evaluation_task_2
 {
@@ -13,30 +12,44 @@ namespace Evaluation_task_2
     {
         private readonly ICsvReader csvReader;
         private readonly PancakeProcessor pancakeProcessor;
-        public DataService(ICsvReader csvReader, PancakeProcessor pancakeProcessor)
+        private readonly DataAnalyzer dataAnalyzer;
+        public DataService(ICsvReader csvReader, PancakeProcessor pancakeProcessor, DataAnalyzer dataAnalyzer)
         {
             this.csvReader = csvReader;
             this.pancakeProcessor = pancakeProcessor;
+            this.dataAnalyzer = dataAnalyzer;
         }
-        public (List<PancakeData>, DataTable) ProcessCsvFile(string filePath)
+        public List<IngredientUsage>? ProcessCsvFile(string filePath, ICsvReader csvReader)
         {
-            List<PancakeData> data = csvReader.ReadCsvFile(filePath);
-
-            // Przetworzenie danych
-            IEnumerable<IGrouping<DateTime, PancakeData>> groupedData = GroupData(data);
-            DataTable resultTable = pancakeProcessor.ProcessData(groupedData);
-
-            return (data, resultTable); // Zwracamy zarówno dane wejściowe, jak i resultTable
+            switch (csvReader)
+            {
+                case null:
+                    return new List<IngredientUsage>();
+                default:
+                    {
+                        {
+                            try
+                            {
+                                List<PancakeData> data = csvReader.ReadCsvFile(filePath);
+                                IEnumerable<IGrouping<DateTime, PancakeData>> groupedData = GroupData(data);
+                                List<IngredientUsage> result = pancakeProcessor.ProcessData(groupedData);
+                                dataAnalyzer.AnalyzeData(result);
+                                return result;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Wystąpił błąd podczas przetwarzania danych: {ex.Message}");
+                                return null;
+                            }
+                        }
+                    }
+            }
         }
         private IEnumerable<IGrouping<DateTime, PancakeData>> GroupData(List<PancakeData> data)
         {
-            var groupedData = data.GroupBy(row => new
-            {
-                row.TIMESTAMP.Date,
-                row.TIMESTAMP.Hour
-            });
-
-            return (IEnumerable<IGrouping<DateTime, PancakeData>>)groupedData;
+            IEnumerable<IGrouping<DateTime, PancakeData>> groupedData = data.GroupBy(row =>
+            new DateTime(row.TIMESTAMP.Year, row.TIMESTAMP.Month, row.TIMESTAMP.Day, row.TIMESTAMP.Hour, 0, 0));
+            return groupedData;
         }
     }
 }
